@@ -16,6 +16,7 @@ dependencies = [
     "psutil>=7.2.1",
     "tqdm>=4.67.1",
     "typer>=0.21.1",
+    "xxtea>=3.7.0",
 ]
 
 [project.urls]
@@ -53,9 +54,8 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["luniix"]
 
-[tool.mypy]
-files = ["luniix", "tests"]
-disable_error_code = ["import-untyped"]
+[tool.ty.rules]
+unresolved-import = "ignore"
 
 [tool.pytest.ini_options]
 filterwarnings = [

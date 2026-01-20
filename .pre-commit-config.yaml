@@ -31,10 +31,11 @@ repos:
       - id: ruff
         name: ruff
 
-  # mypy - lint-like type checking
-  - repo: local
+  # ty - type checking
+  - repo: https://github.com/allganize/ty-pre-commit
+    # Ty version.
+    rev: v0.0.12
     hooks:
-      - id: ty
-        name: ty check
-        entry: ty check .
-        language: python
+      # Run the type checker.
+      - id: ty-check
+        args: [--ignore, unresolved-import]
