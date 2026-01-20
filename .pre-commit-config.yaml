@@ -1,0 +1,40 @@
+default_language_version:
+  python: python3.12
+
+ci:
+  skip: [ty]
+
+repos:
+  # general checks (see here: https://pre-commit.com/hooks.html)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # black - formatting
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        name: black
+        args:
+          - "--config"
+          - "./pyproject.toml"
+
+  # ruff - linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.14.13"
+    hooks:
+      - id: ruff
+        name: ruff
+
+  # mypy - lint-like type checking
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: ty check .
+        language: python

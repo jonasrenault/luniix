@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "luniix"
+version = "0.1.0"
+description = "A Python CLI for handling Lunii stories"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    {name = "Jonas Renault", email = "jonasrenault@gmail.com"},
+]
+requires-python = ">=3.12"
+dependencies = [
+    "psutil>=7.2.1",
+    "tqdm>=4.67.1",
+    "typer>=0.21.1",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/jonasrenault/orion#readme"
+"Repository" = "https://github.com/jonasrenault/orion"
+
+[project.scripts]
+luniix = "luniix.cli.main:app"
+
+[tool.black]
+line_length = 90
+target_version = ['py312']
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "venv",
+]
+src = ["luniix", "tests"]
+line-length = 90
+
+[tool.ruff.lint]
+ignore = []
+select = [
+    "E",
+    "F",
+    "W",
+    "I001",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["luniix"]
+
+[tool.mypy]
+files = ["luniix", "tests"]
+disable_error_code = ["import-untyped"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning",
+    'ignore::DeprecationWarning',
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "ruff>=0.14.13",
+    "ty>=0.0.12",
+]
