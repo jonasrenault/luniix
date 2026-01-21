@@ -38,57 +38,27 @@ class DatabaseManager:
         self._initialized = True
 
         # Placeholder for an actual DB connection object
-        self.connection: Any = None
+        self._db: dict[str, Any] = {}
+        self._load_db()
 
-    # --------------------------------------------------------------------- #
-    # Public API
-    # --------------------------------------------------------------------- #
-    def connect(self, uri: str) -> None:
-        """
-        Establish a connection to the database.
+    def _load_db(self, force: bool = False) -> None:
+        download_official_db(force)
+        download_third_party_db(force)
+        db = load_db(FILE_THIRD_PARTY_DB)
+        db.update(load_db(FILE_OFFICIAL_DB))
+        self._db = db
 
-        Parameters
-        ----------
-        uri: str
-            Database connection string/URL.
-        """
-        if self.connection is None:
-            # In a real implementation you would create a DB engine/connection here.
-            # For now we just store the URI as a placeholder.
-            self.connection = uri
-
-    def execute_query(self, query: str) -> Any:
-        """
-        Execute a query against the connected database.
-
-        Parameters
-        ----------
-        query: str
-            The SQL (or NoSQL) query to run.
-
-        Returns
-        -------
-        Any
-            The result of the query.  This stub returns a simple string.
-        """
-        if self.connection is None:
-            raise RuntimeError(
-                "Database connection not established. Call `connect` first."
-            )
-        # Stub implementation; replace with real query execution logic.
-        return f"Executed query: {query}"
-
-    def close(self) -> None:
-        """Close the database connection (stub)."""
-        self.connection = None
+    def get(self, uuid: str) -> dict[str, Any]:
+        return self._db.get(uuid, {})
 
 
-def load_db(db_path: Path) -> dict[str, Any]:
+def load_db(db_path: Path, official: bool = False) -> dict[str, Any]:
     """
     Load a database from a file.
 
     Args:
         db_path (Path): The path to the database file.
+        official (bool): Whether the database is official or not.
 
     Returns:
         dict[str, Any]: The loaded database.
@@ -100,7 +70,7 @@ def load_db(db_path: Path) -> dict[str, Any]:
     with open(db_path, "r") as f:
         data = json.load(f)
 
-    return data
+    return {uuid: {"official": official, **value} for (uuid, value) in data.items()}
 
 
 def download_official_db(force: bool = False):
@@ -169,7 +139,7 @@ def download_third_party_db(force: bool = False):
 
         db_response = requests.get(THIRD_PARTY_DB_URL, timeout=30)
         db_response.raise_for_status()
-        db = db_response.json()["response"]
+        db = db_response.json()
 
         with open(FILE_THIRD_PARTY_DB, "w") as fp:
             json.dump(db, fp)

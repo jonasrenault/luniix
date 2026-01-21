@@ -3,8 +3,7 @@ import logging
 import typer
 from rich.logging import RichHandler
 
-from luniix.constants import FILE_OFFICIAL_DB
-from luniix.databases import download_official_db, load_db
+from luniix.databases import DatabaseManager
 from luniix.devices import list_devices
 
 FORMAT = "%(message)s"
@@ -24,11 +23,10 @@ def list():
 
 @app.command()
 def db():
-    download_official_db()
+    db = DatabaseManager()
 
-    db = load_db(FILE_OFFICIAL_DB)
-
-    typer.echo(db)
+    db = DatabaseManager()
+    typer.echo(len(db._db))
 
 
 if __name__ == "__main__":
