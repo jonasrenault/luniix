@@ -20,6 +20,7 @@ OFFICIAL_DB_URL = "https://server-data-prod.lunii.com/v2/packs"
 THIRD_PARTY_DB_URL = (
     "https://github.com/jonasrenault/luniix/releases/download/v0.1.0/third-party.json"
 )
+LUNII_DATA_URL = "https://storage.googleapis.com/lunii-data-prod"
 
 CFG_DIR: Path = Path.home() / ".luniix"
 CACHE_DIR = CFG_DIR / "cache"

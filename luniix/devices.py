@@ -3,6 +3,7 @@ import logging
 import platform
 from io import BufferedReader
 from pathlib import Path
+from uuid import UUID
 
 import psutil
 import xxtea
@@ -23,8 +24,11 @@ from luniix.constants import (
     LUNII_V1or2_UNK,
     lunii_tea_rounds,
 )
+from luniix.stories import Story
 
 LOGGER = logging.getLogger(__name__)
+
+FLAM_LIB_BASEDIR = "etc/library/"
 
 
 def is_device(drive_path: Path) -> bool:
@@ -112,6 +116,7 @@ class Device:
         self.stories = []
 
         self._parse_metadata()
+        self._load_stories()
 
     @property
     def snu_str(self) -> str:
@@ -142,26 +147,31 @@ class Device:
             repr_str += f"- Main firmware : v{self.fw_main}\n"
             repr_str += f"- Comm firmware : v{self.fw_comm}\n"
             repr_str += f"- SNU      : {binascii.hexlify(self.snu_hex, ' ')}\n"
-            repr_str += f"- stories  : {len(self.stories)}x"
+        elif self.is_lunii():
+            repr_str = f"Lunii device at {self.mount_point}\n"
+            if self.device_version <= LUNII_V2:
+                repr_str += f"- firmware : v{self.fw_vers_major}.{self.fw_vers_minor}\n"
+            else:
+                repr_str += (
+                    f"- firmware : v{self.fw_vers_major}.{self.fw_vers_minor}"
+                    f".{self.fw_vers_subminor}\n"
+                )
+            repr_str += f"- SNU      : {binascii.hexlify(self.snu_hex, ' ')}\n"
+            repr_str += f"- dev key  : {binascii.hexlify(self.device_key, ' ')}\n"
+            if self.device_version == LUNII_V3:
+                repr_str += f"- dev iv   : {binascii.hexlify(self.device_iv, ' ')}\n"
+                if self.story_key:
+                    repr_str += f"- story key: {binascii.hexlify(self.story_key, ' ')}\n"
+                if self.device_version == LUNII_V3:
+                    repr_str += f"- story iv : {binascii.hexlify(self.story_iv, ' ')}\n"
+        else:
+            repr_str = "Unknown device type."
             return repr_str
 
-        repr_str = f"Lunii device at {self.mount_point}\n"
-        if self.device_version <= LUNII_V2:
-            repr_str += f"- firmware : v{self.fw_vers_major}.{self.fw_vers_minor}\n"
-        else:
-            repr_str += (
-                f"- firmware : v{self.fw_vers_major}.{self.fw_vers_minor}"
-                f".{self.fw_vers_subminor}\n"
-            )
-        repr_str += f"- SNU      : {binascii.hexlify(self.snu_hex, ' ')}\n"
-        repr_str += f"- dev key  : {binascii.hexlify(self.device_key, ' ')}\n"
-        if self.device_version == LUNII_V3:
-            repr_str += f"- dev iv   : {binascii.hexlify(self.device_iv, ' ')}\n"
-            if self.story_key:
-                repr_str += f"- story key: {binascii.hexlify(self.story_key, ' ')}\n"
-            if self.device_version == LUNII_V3:
-                repr_str += f"- story iv : {binascii.hexlify(self.story_iv, ' ')}\n"
-        repr_str += f"- stories  : {len(self.stories)}x"
+        repr_str += f"- stories  : {len(self.stories)}\n"
+        repr_str += "\n".join(
+            [f"> {story.short_uuid} - {story.name}" for story in self.stories]
+        )
         return repr_str
 
     def _parse_metadata(self):
@@ -298,3 +308,72 @@ class Device:
             pass
 
         vid, pid = FAH_V2_V3_USB_VID_PID
+
+    def _load_stories(self):
+        """
+        Load stories from the device.
+        """
+        if self.is_lunii():
+            stories_path = self.mount_point.joinpath(".pi")
+            hidden_stories_path = self.mount_point.joinpath(".pi.hidden")
+            stories = set(load_lunii_stories(stories_path, hidden=False))
+            stories.update(load_lunii_stories(hidden_stories_path, hidden=True))
+            self.stories = list(stories)
+            LOGGER.info(f"Loaded {len(self.stories)} stories")
+
+        elif self.is_flam():
+            stories_path = self.mount_point.joinpath(FLAM_LIB_BASEDIR + "list")
+            hidden_stories_path = self.mount_point.joinpath(
+                FLAM_LIB_BASEDIR + "list.hidden"
+            )
+            stories = set(load_flam_stories(stories_path, hidden=False))
+            stories.update(load_flam_stories(hidden_stories_path, hidden=True))
+            self.stories = list(stories)
+            LOGGER.info(f"Loaded {len(self.stories)} stories")
+
+
+def load_flam_stories(file_path: Path, hidden: bool = False) -> list[Story]:
+    """
+    Load stories from a Flam device.
+
+    Args:
+        file_path (Path): The path to the stories file.
+        hidden (bool): Whether to load hidden stories.
+
+    Returns:
+        list[Story]: The list of stories.
+    """
+    if not file_path.is_file():
+        LOGGER.error(
+            f"Stories directory {file_path} does not exist. Not loading stories."
+        )
+        return []
+
+    with open(file_path, "r") as f:
+        ids = f.readlines()
+        stories = [Story(UUID(id.strip()), hidden=hidden) for id in ids]
+        return stories
+
+
+def load_lunii_stories(file_path: Path, hidden: bool = False) -> list[Story]:
+    """
+    Load stories from a Lunii device.
+
+    Args:
+        file_path (Path): The path to the stories file.
+        hidden (bool): Whether to load hidden stories.
+
+    Returns:
+        list[Story]: The list of stories.
+    """
+    if not file_path.is_file():
+        LOGGER.error(
+            f"Stories directory {file_path} does not exist. Not loading stories."
+        )
+        return []
+
+    with open(file_path, "rb") as f:
+        stories = [
+            Story(UUID(bytes=id), hidden=hidden) for id in iter(lambda: f.read(16), b"")
+        ]
+        return stories

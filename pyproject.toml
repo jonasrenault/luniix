@@ -25,7 +25,7 @@ dependencies = [
 "Repository" = "https://github.com/jonasrenault/orion"
 
 [project.scripts]
-luniix = "luniix.cli.main:app"
+luniix = "luniix.cli:app"
 
 [tool.black]
 line_length = 90
