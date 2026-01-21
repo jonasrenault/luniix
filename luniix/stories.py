@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 import requests
 
-from luniix.constants import CACHE_DIR, LUNII_DATA_URL
+from luniix.constants import CACHE_DIR, LUNII_DATA_URL, ArchiveExt, ArchiveType
 from luniix.databases import DatabaseManager
 
 STORY_UNKNOWN = "Unknown story (maybe a User created story)..."
@@ -103,3 +104,17 @@ def download_story_image(story: Story, force: bool = False):
         requests.exceptions.HTTPError,
     ):
         LOGGER.error(f"Failed to download story image for {story.uuid}", exc_info=True)
+
+
+def get_story_archive_type(story_path: Path):
+    if story_path.name.lower().endswith(ArchiveExt.PLAIN.value):
+        return ArchiveType.PLAIN
+    elif story_path.name.lower().endswith(ArchiveExt.V2.value):
+        return ArchiveType.V2
+    elif story_path.name.lower().endswith(ArchiveExt.V3.value):
+        return ArchiveType.V3
+    elif story_path.name.lower().endswith(ArchiveExt.ZIP.value):
+        return ArchiveType.ZIP
+    elif story_path.name.lower().endswith(ArchiveExt.SEVENZ.value):
+        return ArchiveType.SEVENZ
+    return ArchiveType.UNKNOWN

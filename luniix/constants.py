@@ -1,3 +1,4 @@
+from enum import Enum, StrEnum
 from pathlib import Path
 
 
@@ -28,14 +29,38 @@ FILE_OFFICIAL_DB = CFG_DIR / "official.json"
 FILE_THIRD_PARTY_DB = CFG_DIR / "third-party.json"
 V3_KEYS = CFG_DIR / "v3.keys"
 
-LUNII_V1or2_UNK = 0
-LUNII_V1 = 1
-LUNII_V2 = 2
-LUNII_V3 = 3
-FLAM_V1 = 10
-UNDEF_DEV = 255
-
 FAH_V1_USB_VID_PID = (0x0C45, 0x6820)
 FAH_V1_FW_2_USB_VID_PID = (0x0C45, 0x6840)
 FAH_V2_V3_USB_VID_PID = (0x0483, 0xA341)
 FLAM_USB_VID_PID = (0x303A, 0x819E)
+
+
+class DeviceType(int, Enum):
+    UNKNOWN = 255
+    LUNII_V1or2 = 0
+    LUNII_V1 = 1
+    LUNII_V2 = 2
+    LUNII_V3 = 3
+    FLAM_V1 = 10
+
+
+class ArchiveType(StrEnum):
+    UNKNOWN = "unknown"
+    PLAIN = "plain"
+    V2 = "v2"
+    V3 = "v3"
+    ZIP = "zip"
+    SEVENZ = "7z"
+    STUDIO_ZIP = "studio_zip"
+    STUDIO_7Z = "studio_7z"
+    FLAM_ZIP = "flam_zip"
+    FLAM_7Z = "flam_7z"
+
+
+class ArchiveExt(StrEnum):
+    PLAIN = ".plain.pk"
+    V2 = ".v2.pk"
+    V3 = ".v3.pk"
+    VX = ".pk"
+    ZIP = ".zip"
+    SEVENZ = ".7z"

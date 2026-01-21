@@ -15,13 +15,8 @@ from luniix.constants import (
     FAH_V1_USB_VID_PID,
     FAH_V2_V3_USB_VID_PID,
     FLAM_USB_VID_PID,
-    FLAM_V1,
     LUNII_GENERIC_KEY,
-    LUNII_V1,
-    LUNII_V2,
-    LUNII_V3,
-    UNDEF_DEV,
-    LUNII_V1or2_UNK,
+    DeviceType,
     lunii_tea_rounds,
 )
 from luniix.stories import Story
@@ -101,7 +96,7 @@ def list_devices() -> list[Path]:
 class Device:
     def __init__(self, mount_point: Path):
         self.mount_point = mount_point
-        self.device_version = 0
+        self.device_type = DeviceType.UNKNOWN
         self.device_key: bytes = b""
         self.device_iv: bytes = b""
         self.story_key: bytes = b""
@@ -149,7 +144,7 @@ class Device:
             repr_str += f"- SNU      : {binascii.hexlify(self.snu_hex, ' ')}\n"
         elif self.is_lunii():
             repr_str = f"Lunii device at {self.mount_point}\n"
-            if self.device_version <= LUNII_V2:
+            if self.device_type <= DeviceType.LUNII_V2:
                 repr_str += f"- firmware : v{self.fw_vers_major}.{self.fw_vers_minor}\n"
             else:
                 repr_str += (
@@ -158,11 +153,11 @@ class Device:
                 )
             repr_str += f"- SNU      : {binascii.hexlify(self.snu_hex, ' ')}\n"
             repr_str += f"- dev key  : {binascii.hexlify(self.device_key, ' ')}\n"
-            if self.device_version == LUNII_V3:
+            if self.device_type == DeviceType.LUNII_V3:
                 repr_str += f"- dev iv   : {binascii.hexlify(self.device_iv, ' ')}\n"
                 if self.story_key:
                     repr_str += f"- story key: {binascii.hexlify(self.story_key, ' ')}\n"
-                if self.device_version == LUNII_V3:
+                if self.device_type == DeviceType.LUNII_V3:
                     repr_str += f"- story iv : {binascii.hexlify(self.story_iv, ' ')}\n"
         else:
             repr_str = "Unknown device type."
@@ -218,9 +213,9 @@ class Device:
         pid = int.from_bytes(fp_md.read(2), "little")
 
         if (vid, pid) == FLAM_USB_VID_PID:
-            self.device_version = FLAM_V1
+            self.device_type = DeviceType.FLAM_V1
         else:
-            self.device_version = UNDEF_DEV
+            self.device_type = DeviceType.UNKNOWN
 
     def __md1to5_parse(self, fp_md: BufferedReader):
         """
@@ -238,12 +233,11 @@ class Device:
         pid = int.from_bytes(fp_md.read(2), "little")
 
         if (vid, pid) == FAH_V1_USB_VID_PID or (vid, pid) == FAH_V1_FW_2_USB_VID_PID:
-            self.device_version = LUNII_V1
+            self.device_type = DeviceType.LUNII_V1
         elif (vid, pid) == FAH_V2_V3_USB_VID_PID:
-            self.device_version = LUNII_V2
+            self.device_type = DeviceType.LUNII_V2
         else:
-            self.device_version = LUNII_V1or2_UNK
-
+            self.device_type = DeviceType.LUNII_V1or2
         fp_md.seek(0x100)
         self.raw_devkey = fp_md.read(0x100)
         dec = xxtea.decrypt(
@@ -262,7 +256,7 @@ class Device:
         Args:
             fp_md (BufferedReader): File pointer to the metadata file.
         """
-        self.device_version = LUNII_V3
+        self.device_type = DeviceType.LUNII_V3
         # reading metadata version
         fp_md.seek(0)
         md_vers = int.from_bytes(fp_md.read(1))
