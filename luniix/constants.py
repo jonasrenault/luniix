@@ -15,10 +15,14 @@ def lunii_tea_rounds(buffer):
 RAW_KEY_GENERIC: list[int] = [0x91BD7A0A, 0xA75440A9, 0xBBD49D6C, 0xE0DCC0E3]
 LUNII_GENERIC_KEY = vectkey_to_bytes(RAW_KEY_GENERIC)
 
-CFG_DIR: Path = Path.home() / ".lunii-qt"
+OFFICIAL_TOKEN_URL = "https://server-auth-prod.lunii.com/guest/create"
+OFFICIAL_DB_URL = "https://server-data-prod.lunii.com/v2/packs"
+THIRD_PARTY_DB_URL = "https://server-data-prod.lunii.com/v2/packs"
+
+CFG_DIR: Path = Path.home() / ".luniix"
 CACHE_DIR = CFG_DIR / "cache"
-FILE_OFFICIAL_DB = CFG_DIR / "official.db"
-FILE_THIRD_PARTY_DB = CFG_DIR / "third-party.db"
+FILE_OFFICIAL_DB = CFG_DIR / "official.json"
+FILE_THIRD_PARTY_DB = CFG_DIR / "third-party.json"
 V3_KEYS = CFG_DIR / "v3.keys"
 
 LUNII_V1or2_UNK = 0
