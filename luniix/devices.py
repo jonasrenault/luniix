@@ -113,7 +113,7 @@ class Device:
         self.fw_vers_minor = 0
         self.fw_vers_subminor = 0
         self.bt = b""
-        self.stories = []
+        self.stories: list[Story] = []
 
         self._parse_metadata()
         self._load_stories()
@@ -139,7 +139,7 @@ class Device:
         elif self.is_flam():
             return self.mount_point.joinpath(".mdf")
         else:
-            raise RuntimeError(f"Device {self.mount_point} is not a Lunii device.")
+            raise RuntimeError(f"Device {self.mount_point} is an unknown device type.")
 
     def __repr__(self):
         if self.is_flam():
